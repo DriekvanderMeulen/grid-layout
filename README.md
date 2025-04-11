@@ -1,4 +1,4 @@
-# Figma Grid Overlay Chrome Extension
+## Grid Overlay Chrome Extension
 
 A Chrome extension that adds a configurable grid overlay to any webpage, similar to Figma's layout grid functionality. Perfect for web developers and designers who want to ensure their layouts match design specifications.
 
@@ -42,7 +42,7 @@ A Chrome extension that adds a configurable grid overlay to any webpage, similar
 - `popup.html` - Configuration interface
 - `popup.js` - Configuration logic and messaging
 - `content.js` - Grid overlay implementation
-- `styles.css` - Additional styling
+- `grid-layout.css` - Additional styling
 
 ### Testing
 

@@ -1,96 +1,212 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Figma Grid Overlay</title>
+	<meta charset="UTF-8">
 	<style>
 		body {
 			width: 300px;
 			padding: 16px;
-			font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+			color: #fff;
+			background: #2c2c2c;
+			margin: 0;
 		}
+
 		.section {
 			margin-bottom: 16px;
 		}
-		.field {
-			margin-bottom: 8px;
+
+		.header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin-bottom: 12px;
 		}
-		label {
-			display: block;
-			margin-bottom: 4px;
-			font-size: 14px;
-		}
-		input, select {
-			width: 100%;
-			padding: 4px 8px;
-			border: 1px solid #ccc;
-			border-radius: 4px;
-		}
-		button {
-			width: 100%;
-			padding: 8px;
-			background: #000;
+
+		.dropdown {
+			background: #1e1e1e;
+			border: 1px solid #3c3c3c;
 			color: white;
-			border: none;
-			border-radius: 4px;
+			padding: 8px;
+			border-radius: 6px;
+			width: 100%;
 			cursor: pointer;
 		}
-		button:hover {
-			opacity: 0.9;
+
+		.input-group {
+			display: grid;
+			grid-template-columns: 100px 1fr;
+			gap: 8px;
+			align-items: center;
+			margin-bottom: 8px;
+		}
+
+		.input {
+			background: #1e1e1e;
+			border: 1px solid #3c3c3c;
+			color: white;
+			padding: 8px;
+			border-radius: 6px;
+			width: 100%;
+			box-sizing: border-box;
+		}
+
+		.input[disabled] {
+			opacity: 0.5;
+			cursor: not-allowed;
+		}
+
+		label {
+			font-size: 12px;
+			color: #cccccc;
+		}
+
+		.color-input {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			width: 100%;
+		}
+
+		.color-picker {
+			width: 20px;
+			height: 20px;
+			border: none;
+			padding: 0;
+			background: none;
+		}
+
+		.opacity-input {
+			width: 50px !important;
+		}
+
+		/* Toggle switch styles */
+		.toggle-container {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin-bottom: 16px;
+			padding: 8px 0;
+			border-bottom: 1px solid #3c3c3c;
+		}
+
+		.toggle-label {
+			font-size: 14px;
+			font-weight: 500;
+		}
+
+		.switch {
+			position: relative;
+			display: inline-block;
+			width: 44px;
+			height: 24px;
+		}
+
+		.switch input {
+			opacity: 0;
+			width: 0;
+			height: 0;
+		}
+
+		.slider {
+			position: absolute;
+			cursor: pointer;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background-color: #3c3c3c;
+			transition: .3s;
+			border-radius: 24px;
+		}
+
+		.slider:before {
+			position: absolute;
+			content: "";
+			height: 18px;
+			width: 18px;
+			left: 3px;
+			bottom: 3px;
+			background-color: white;
+			transition: .3s;
+			border-radius: 50%;
+		}
+
+		input:checked + .slider {
+			background-color: #0066ff;
+		}
+
+		input:checked + .slider:before {
+			transform: translateX(20px);
 		}
 	</style>
 </head>
 <body>
-	<div class="section">
-		<div class="field">
-			<label>Grid Size</label>
-			<input type="number" id="size" value="10" />
+	<div class="toggle-container">
+		<span class="toggle-label">Show Grid Overlay</span>
+		<label class="switch">
+			<input type="checkbox" id="gridToggle">
+			<span class="slider"></span>
+		</label>
+	</div>
+
+	<div id="gridSettings" style="display: none;">
+		<div class="section">
+			<div class="header">
+				<select id="gridType" class="dropdown">
+					<option value="columns">Columns</option>
+					<option value="rows">Rows</option>
+					<option value="grid">Grid</option>
+				</select>
+			</div>
+
+			<div class="input-group">
+				<label>Count</label>
+				<input type="number" id="count" class="input" value="5" min="1" max="100">
+			</div>
+
+			<div class="input-group">
+				<label>Color</label>
+				<div class="color-input">
+					<input type="color" id="color" class="color-picker" value="#FF0000">
+					<input type="text" id="colorHex" class="input" value="FF0000">
+					<input type="number" id="opacity" class="input opacity-input" value="10" min="0" max="100">
+					<span>%</span>
+				</div>
+			</div>
+
+			<div class="input-group">
+				<label>Type</label>
+				<select id="type" class="dropdown">
+					<option value="stretch">Stretch</option>
+					<option value="center">Center</option>
+					<option value="left">Left</option>
+					<option value="right">Right</option>
+				</select>
+			</div>
+
+			<div class="input-group" id="sizeGroup">
+				<label id="sizeLabel">Width</label>
+				<input type="number" id="size" class="input" value="10" min="0">
+			</div>
+
+			<div class="input-group" id="marginGroup">
+				<label>Margin</label>
+				<input type="number" id="margin" class="input" value="0" min="0">
+			</div>
+
+			<div class="input-group" id="offsetGroup">
+				<label>Offset</label>
+				<input type="number" id="offset" class="input" value="0" min="0">
+			</div>
+
+			<div class="input-group">
+				<label>Gutter</label>
+				<input type="number" id="gutter" class="input" value="20" min="0">
+			</div>
 		</div>
 	</div>
-	<div class="section">
-		<div class="field">
-			<label>Columns</label>
-			<input type="number" id="columns" value="5" />
-		</div>
-		<div class="field">
-			<label>Column Type</label>
-			<select id="columnType">
-				<option value="stretch">Stretch</option>
-				<option value="fixed">Fixed</option>
-			</select>
-		</div>
-		<div class="field">
-			<label>Column Gutter</label>
-			<input type="number" id="columnGutter" value="20" />
-		</div>
-	</div>
-	<div class="section">
-		<div class="field">
-			<label>Rows</label>
-			<input type="number" id="rows" value="5" />
-		</div>
-		<div class="field">
-			<label>Row Type</label>
-			<select id="rowType">
-				<option value="stretch">Stretch</option>
-				<option value="fixed">Fixed</option>
-			</select>
-		</div>
-		<div class="field">
-			<label>Row Gutter</label>
-			<input type="number" id="rowGutter" value="20" />
-		</div>
-	</div>
-	<div class="section">
-		<div class="field">
-			<label>Grid Color</label>
-			<input type="color" id="color" value="#FF0000" />
-		</div>
-		<div class="field">
-			<label>Opacity (%)</label>
-			<input type="number" id="opacity" value="10" min="0" max="100" />
-		</div>
-	</div>
-	<button id="toggle">Toggle Grid</button>
+
 	<script src="popup.js"></script>
 </body>
 </html> 

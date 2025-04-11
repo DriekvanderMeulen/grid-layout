@@ -1,8 +1,8 @@
 {
 	"manifest_version": 3,
-	"name": "Figma Grid Overlay",
+	"name": "Grid Overlay",
 	"version": "1.0",
-	"description": "Adds a configurable grid overlay similar to Figma's layout grid",
+	"description": "Create grid overlays similar to Figma for web development",
 	"permissions": ["activeTab", "storage"],
 	"action": {
 		"default_popup": "popup.html"
@@ -10,8 +10,8 @@
 	"content_scripts": [
 		{
 			"matches": ["<all_urls>"],
-			"css": ["styles.css"],
-			"js": ["content.js"]
+			"js": ["content.js"],
+			"css": ["grid-overlay.css"]
 		}
 	]
 } 

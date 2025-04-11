@@ -1,0 +1,5 @@
+#figma-grid-overlay {
+	pointer-events: none !important;
+	z-index: 9999 !important;
+	mix-blend-mode: multiply;
+} 

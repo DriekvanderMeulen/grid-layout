@@ -1,31 +1,41 @@
 class GridOverlay {
 	constructor() {
-		this.isVisible = false
-		this.container = null
-		this.config = {
-			size: 10,
-			columns: 5,
-			columnType: 'stretch',
-			columnGutter: 20,
-			rows: 5,
-			rowType: 'stretch',
-			rowGutter: 20,
-			color: '#FF0000',
-			opacity: 10
-		}
-		this.init()
+		this.overlay = null
+		this.settings = null
+		this.initialize()
 	}
 
-	init() {
-		chrome.storage.sync.get(Object.keys(this.config), (settings) => {
-			this.config = { ...this.config, ...settings }
+	initialize() {
+		chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+			if (message.type === 'UPDATE_GRID') {
+				this.settings = message.settings
+				this.updateGrid()
+			} else if (message.type === 'HIDE_GRID') {
+				this.hideGrid()
+			}
+		})
+
+		chrome.storage.local.get(['isGridVisible', 'gridSettings'], (data) => {
+			if (data.isGridVisible && data.gridSettings) {
+				this.settings = data.gridSettings
+				this.updateGrid()
+			}
 		})
 	}
 
-	createContainer() {
-		const container = document.createElement('div')
-		container.id = 'figma-grid-overlay'
-		container.style.cssText = `
+	hideGrid() {
+		if (this.overlay) {
+			this.overlay.remove()
+			this.overlay = null
+		}
+	}
+
+	createOverlay() {
+		this.hideGrid()
+
+		this.overlay = document.createElement('div')
+		this.overlay.id = 'figma-grid-overlay'
+		this.overlay.style.cssText = `
 			position: fixed;
 			top: 0;
 			left: 0;
@@ -34,102 +44,135 @@ class GridOverlay {
 			pointer-events: none;
 			z-index: 9999;
 		`
-		return container
+		document.body.appendChild(this.overlay)
 	}
 
-	createGrid() {
-		const { columns, rows, columnGutter, rowGutter, color, opacity } = this.config
-		const container = this.createContainer()
+	updateGrid() {
+		this.createOverlay()
+		
+		const {
+			gridType,
+			count,
+			color,
+			opacity,
+			type,
+			size,
+			margin,
+			offset,
+			gutter
+		} = this.settings
 
-		// Create columns
-		const columnContainer = document.createElement('div')
-		columnContainer.style.cssText = `
-			position: absolute;
-			top: 0;
-			left: 0;
-			width: 100%;
-			height: 100%;
+		const colorWithOpacity = this.hexToRGBA(color, opacity / 100)
+
+		if (gridType === 'columns') {
+			this.createColumnGrid(count, colorWithOpacity, type, size, margin, offset, gutter)
+		} else if (gridType === 'rows') {
+			this.createRowGrid(count, colorWithOpacity, type, size, margin, offset, gutter)
+		} else {
+			this.createFullGrid(count, colorWithOpacity, type, size, margin, offset, gutter)
+		}
+	}
+
+	hexToRGBA(hex, alpha) {
+		const r = parseInt(hex.slice(1, 3), 16)
+		const g = parseInt(hex.slice(3, 5), 16)
+		const b = parseInt(hex.slice(5, 7), 16)
+		return `rgba(${r}, ${g}, ${b}, ${alpha})`
+	}
+
+	getPositionStyles(type, size, margin, offset, isVertical = false) {
+		const styles = []
+		const dimension = isVertical ? 'height' : 'width'
+		const offsetDir = isVertical ? 'top' : 'left'
+
+		if (type === 'stretch') {
+			styles.push(`${dimension}: calc(100% - ${margin * 2}px)`)
+			styles.push(`${offsetDir}: ${margin}px`)
+		} else {
+			styles.push(`${dimension}: ${size}px`)
+			
+			if (type === 'center') {
+				styles.push(`${offsetDir}: 50%`)
+				styles.push('transform: ' + (isVertical ? 'translateY(-50%)' : 'translateX(-50%)'))
+			} else if (type === 'right' || type === 'bottom') {
+				styles.push(`${offsetDir}: calc(100% - ${size}px - ${offset}px)`)
+			} else { // left or top
+				styles.push(`${offsetDir}: ${offset}px`)
+			}
+		}
+
+		return styles.join(';')
+	}
+
+	createColumnGrid(count, color, type, size, margin, offset, gutter) {
+		const positionStyles = this.getPositionStyles(type, size, margin, offset)
+
+		this.overlay.style.cssText += `
 			display: grid;
-			grid-template-columns: repeat(${columns}, 1fr);
-			gap: 0 ${columnGutter}px;
+			grid-template-columns: repeat(${count}, 1fr);
+			gap: ${gutter}px;
+			height: 100%;
+			position: fixed;
+			${positionStyles};
 		`
 
-		for (let i = 0; i < columns; i++) {
+		for (let i = 0; i < count; i++) {
 			const column = document.createElement('div')
 			column.style.cssText = `
 				background-color: ${color};
-				opacity: ${opacity / 100};
 				height: 100%;
+				width: 100%;
 			`
-			columnContainer.appendChild(column)
+			this.overlay.appendChild(column)
 		}
+	}
 
-		// Create rows
-		const rowContainer = document.createElement('div')
-		rowContainer.style.cssText = `
-			position: absolute;
-			top: 0;
-			left: 0;
-			width: 100%;
-			height: 100%;
+	createRowGrid(count, color, type, size, margin, offset, gutter) {
+		const positionStyles = this.getPositionStyles(type, size, margin, offset, true)
+
+		this.overlay.style.cssText += `
 			display: grid;
-			grid-template-rows: repeat(${rows}, 1fr);
-			gap: ${rowGutter}px 0;
+			grid-template-rows: repeat(${count}, 1fr);
+			gap: ${gutter}px;
+			width: 100%;
+			position: fixed;
+			${positionStyles};
 		`
 
-		for (let i = 0; i < rows; i++) {
+		for (let i = 0; i < count; i++) {
 			const row = document.createElement('div')
 			row.style.cssText = `
 				background-color: ${color};
-				opacity: ${opacity / 100};
 				width: 100%;
+				height: 100%;
 			`
-			rowContainer.appendChild(row)
+			this.overlay.appendChild(row)
 		}
-
-		container.appendChild(columnContainer)
-		container.appendChild(rowContainer)
-		return container
 	}
 
-	show() {
-		if (!this.container) {
-			this.container = this.createGrid()
-			document.body.appendChild(this.container)
-		}
-		this.container.style.display = 'block'
-		this.isVisible = true
-	}
+	createFullGrid(count, color, type, size, margin, offset, gutter) {
+		const positionStyles = this.getPositionStyles(type, size, margin, offset)
 
-	hide() {
-		if (this.container) {
-			this.container.style.display = 'none'
-		}
-		this.isVisible = false
-	}
+		this.overlay.style.cssText += `
+			display: grid;
+			grid-template-columns: repeat(${count}, 1fr);
+			grid-template-rows: repeat(${count}, 1fr);
+			gap: ${gutter}px;
+			aspect-ratio: 1;
+			position: fixed;
+			${positionStyles};
+		`
 
-	toggle() {
-		this.isVisible ? this.hide() : this.show()
-	}
-
-	update(newConfig) {
-		this.config = { ...this.config, ...newConfig }
-		if (this.container) {
-			document.body.removeChild(this.container)
-			this.container = null
-		}
-		if (this.isVisible) {
-			this.show()
+		for (let i = 0; i < count * count; i++) {
+			const cell = document.createElement('div')
+			cell.style.cssText = `
+				background-color: ${color};
+				width: 100%;
+				height: 100%;
+			`
+			this.overlay.appendChild(cell)
 		}
 	}
 }
 
-const gridOverlay = new GridOverlay()
-
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-	if (message.action === 'toggleGrid') {
-		gridOverlay.toggle()
-	} else if (message.action === 'updateGrid') {
-		gridOverlay.update(message.config)
-	}
-}) 
+new GridOverlay() 
