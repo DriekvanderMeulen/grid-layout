@@ -7,6 +7,11 @@
 	"action": {
 		"default_popup": "popup.html"
 	},
+	"icons": {
+		"16": "github.png",
+		"48": "github.png",
+		"128": "github.png"
+	},
 	"content_scripts": [
 		{
 			"matches": ["<all_urls>"],
@@ -14,4 +19,4 @@
 			"css": ["grid-overlay.css"]
 		}
 	]
-} 
+}
